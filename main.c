@@ -203,6 +203,7 @@ int read_PS2_arrow_or_enter()
 {
     int PS2_data, RVALID;
     char byte = 0;
+	int f_count = 0;
 
     while(1) {
         PS2_data = *(PS2_ptr);
@@ -210,16 +211,22 @@ int read_PS2_arrow_or_enter()
 		if (RVALID){printf("RVALID: %d\n", RVALID);};
         if (RVALID) {
             byte = PS2_data & 0xFF;
-			int e_count
+			
             // Some keyboards send 0xE0 or 0xF0 before arrow keys
-            if (byte == 0xE0 || byte == 0xF0) {
+            if (byte == 0xE0) {
                 continue; 
             }
+			else if (byte == 0xF0){
+				f_count += 1;
+				continue;
+			}
             // Check if arrow or Enter
             if (byte == KEY_UP   || byte == KEY_DOWN  || 
                 byte == KEY_LEFT || byte == KEY_RIGHT ||
                 byte == KEY_ENTER) {
-                return byte;
+				if (f_count == 1){
+					f_count = 0;
+                	return byte;}
             }
         }
     }
@@ -440,4 +447,3 @@ void delay_loop(int player)
         printf("Player 2's turn!\n");
     }
 }
-
