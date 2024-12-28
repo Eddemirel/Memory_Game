@@ -399,28 +399,64 @@ void get_card_xy(int cardIndex, int *x, int *y)
     }
 }
 
-// Draw a red overlay
-void highlight_card(int cardIndex, short int *currentColor)
-{
+// Draws a frame around a card to highlight it
+void highlight_card(int cardIndex, short int *currentColor) {
     int x, y;
-    get_card_xy(cardIndex, &x, &y);
-    // "Overlay" in red.  In a real game, you might draw a red rectangle border 
-    // instead. For simplicity, we overwrite the 24x24 area:
-    draw_square_symbol(x, y, 0xF800);  // red
+    get_card_xy(cardIndex, &x, &y); // Get the top-left corner of the card
 
-    // Then, you could draw a smaller area inside with currentColor[cardIndex]
-    // if you want to preserve the pattern. 
-    // For a simpler approach, we’ll just show the big red block 
-    // while pointer is here.
+    x -= 6;
+    y -= 25;
+
+    // Draw the frame around the card
+    int frame_thickness = 2; // Thickness of the frame
+    short int frame_color = 0x07E0; // Green color for the frame
+
+    // Top and bottom edges
+    for (int i = 0; i < 38; i++) {
+        for (int t = 0; t < frame_thickness; t++) {
+            plot_pixel(x + i -1, y - t, frame_color);           // Top edge
+            plot_pixel(x + i -1, y + 73 + t, frame_color);      // Bottom edge
+        }
+    }
+
+    // Left and right edges
+    for (int i = 0; i < 73; i++) {
+        for (int t = 0; t < frame_thickness; t++) {
+            plot_pixel(x - t, y + i, frame_color);           // Left edge
+            plot_pixel(x + 35 + t, y + i, frame_color);      // Right edge
+        }
+    }
 }
 
-// Remove highlight by re-drawing the card’s current color
-void unhighlight_card(int cardIndex, short int *currentColor)
-{
+// Removes the frame from a card
+void unhighlight_card(int cardIndex, short int *currentColor) {
     int x, y;
-    get_card_xy(cardIndex, &x, &y);
-    draw_square_symbol(x, y, currentColor[cardIndex]);
+    get_card_xy(cardIndex, &x, &y); // Get the top-left corner of the card
+
+    x -= 6;
+    y -= 25;
+
+    // Draw the frame around the card
+    int frame_thickness = 2; // Thickness of the frame
+    short int frame_color = 0x0000; // Green color for the frame
+
+    // Top and bottom edges
+    for (int i = 0; i < 38; i++) {
+        for (int t = 0; t < frame_thickness; t++) {
+            plot_pixel(x + i -1, y - t, frame_color);           // Top edge
+            plot_pixel(x + i -1, y + 73 + t, frame_color);      // Bottom edge
+        }
+    }
+
+    // Left and right edges
+    for (int i = 0; i < 73; i++) {
+        for (int t = 0; t < frame_thickness; t++) {
+            plot_pixel(x - t, y + i, frame_color);           // Left edge
+            plot_pixel(x + 35 + t, y + i, frame_color);      // Right edge
+        }
+    }
 }
+
 
 // ------------------------------------------------------------------------
 // =========================== Utility Routines ============================
