@@ -204,18 +204,32 @@ int game_start_dual(short int *array)
 			play_sound(win_buffer);
             score = 1;
             if (player_turn == 0) {
-                printf("Player 1 gets a point.\n");
-                printf("Player 2's turn!\n");
+                player1_score += score;
+                display_score(player_turn, player1_score);
+                // Match! Again player 1's turn!
+                player_turn = 0;
+                printf("Player 1 gets a point! Player 1's turn again.\n");
             } else {
-                printf("Player 2 gets a point.\n");
-                printf("Player 1's turn!\n");
+                player2_score += score;
+                display_score(player_turn, player2_score);
+                // Match! Again player 2's turn!
+                player_turn = 1;
+                printf("Player 2 gets a point! Player 2's turn again!\n");
             }
         } else {
             // mismatch => delay, then flip them back
             if (player_turn == 0) {
-                printf("Not a match. Player 1 doesn't score.\n");
+                player1_score += score;
+                display_score(player_turn, player1_score);
+                // Not match! Now player 2's turn.
+                player_turn = 1;
+                printf("Not a match. Player 1 doesn't score. Player 2's turn.\n");
             } else {
-                printf("Not a match. Player 2 doesn't score.\n");
+                player2_score += score;
+                display_score(player_turn, player2_score);
+                // Not match! Now player 1's turn.
+                player_turn = 0;
+                printf("Not a match. Player 2 doesn't score. Player 1's turn.\n");
             }
             delay_loop(player_turn);
 
@@ -223,16 +237,6 @@ int game_start_dual(short int *array)
             close_card_pointerVersion(index2, currentColor);
         }
 
-        // 4) Update scores
-        if (player_turn == 0) {
-            player1_score += score;
-            display_score(player_turn, player1_score);
-            player_turn = 1;
-        } else {
-            player2_score += score;
-            display_score(player_turn, player2_score);
-            player_turn = 0;
-        }
         score = 0;
     }
 
@@ -516,12 +520,6 @@ void delay_loop(int player)
 {
     int i = 1000000;
     while(i--) { /* spin */ }
-
-    if (player == 1) {
-        printf("Player 1's turn!\n");
-    } else {
-        printf("Player 2's turn!\n");
-    }
 }
 
 
