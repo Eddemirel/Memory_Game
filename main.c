@@ -81,7 +81,13 @@ int main(void)
     // 1. Set up the pixel buffer
     pixel_buffer_start = *PIXEL_BUF_CTRL; 
     srand(time(NULL));  
-    *(PS2_ptr) = 0xFF;  // reset PS/2
+
+    // Reset PS/2
+    *(PS2_ptr) = 0xFF;
+
+    // Reset 7-segment displays
+    *(ADDR_7SEG1) = 0x0;
+    *(ADDR_7SEG2) = 0x0;
 
     // 2. Clear screen
     clear_screen();
