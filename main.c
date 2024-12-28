@@ -5,6 +5,13 @@
 #include <time.h>
 #include <stdbool.h>
 
+// Hardcode game mode FOR NOW!
+#define SINGLE_MODE 0
+#define DUAL_MODE 1
+
+int game_mode = DUAL_MODE; // This should be updated AT THE START PAGE.
+
+
 // ------------------ DE1-SoC/PS2 Constants & Addresses --------------------
 #define PS2_BASE        ((volatile long *) 0xFF200100)
 volatile int * PS2_ptr = (int *)PS2_BASE;
@@ -36,7 +43,8 @@ volatile int *audio_ptr = (int *) AUDIO_BASE;    // Audio port base address
 // ===================== Function Declarations =============================
 // ------------------------------------------------------------------------
 int  read_PS2_arrow_or_enter();
-int  game_start(short int *array);
+int  game_start_single(short int *array);
+int  game_start_dual(short int *array);
 int  select_card_with_pointer(short int *cardsColorArray);
 void flip_card_pointerVersion(int index, short int *patternArray, short int *currentColor);
 void close_card_pointerVersion(int index, short int *currentColor);
@@ -80,14 +88,10 @@ int main(void)
 {
     // 1. Set up the pixel buffer
     pixel_buffer_start = *PIXEL_BUF_CTRL; 
-    srand(time(NULL));  
+    srand(time(NULL));
 
     // Reset PS/2
     *(PS2_ptr) = 0xFF;
-
-    // Reset 7-segment displays
-    *(ADDR_7SEG1) = 0x0;
-    *(ADDR_7SEG2) = 0x0;
 
     // 2. Clear screen
     clear_screen();
@@ -95,8 +99,13 @@ int main(void)
     // 3. Optional: Shuffle the test patterns to randomize pairs
     shuffle_deck(testPatterns, 10);
 
-    // 4. Run the game loop (single-player pointer-based) 
-    int winner = game_start(testPatterns);
+    // 4. Run the game loop and start the game.
+    int winner;
+    if (game_mode == SINGLE_MODE) {
+        winner = game_start_single(testPatterns);  // Single-player mode
+    } else if (game_mode == DUAL_MODE) {
+        winner = game_start_dual(testPatterns);  // Dual-player mode
+    }
 
     // 5. End
     if (winner == 0) {
@@ -111,17 +120,29 @@ int main(void)
     return 0;
 }
 
-// ------------------------------------------------------------------------
-// ==================== game_start() Using Pointer =========================
-// ------------------------------------------------------------------------
-int game_start(short int *array)
+int game_start_single(short int *array)
 {
+    printf("Starting Single-Player Mode...\n");
+    // TO BE IMPLEMENTED!
+    return 0;
+}
+
+
+int game_start_dual(short int *array)
+{
+    // Game logic for dual-player mode (adapt existing logic for two players)
+    printf("Starting Dual-Player Mode...\n");
+
     // Clear screen & draw 2 rows of "cards" (closed = white rectangles)
     clear_screen();
     draw_all_cards();
 
+    // Initialize scoreboard:
+    display_score(0, 0);
+    display_score(1, 0);
+
     // For demonstration, we’ll track two players and do a max total of 5 matches
-    int player = 0;
+    int player_turn = 0;
     int player1_score = 0;
     int player2_score = 0;
     int index1 = -1, index2 = -1;
@@ -142,6 +163,7 @@ int game_start(short int *array)
     // We have 5 pairs => the game ends when 5 matches are found
     while ( (player1_score + player2_score) < 5 ) 
     {
+
         // 1) Select the first card
         bool valid = false;
         while(!valid) {
@@ -175,7 +197,7 @@ int game_start(short int *array)
             matched[index2] = true;
 			play_sound(win_buffer);
             score = 1;
-            if (player == 0) {
+            if (player_turn == 0) {
                 printf("Player 1 gets a point.\n");
                 printf("Player 2's turn!\n");
             } else {
@@ -184,35 +206,38 @@ int game_start(short int *array)
             }
         } else {
             // mismatch => delay, then flip them back
-            if (player == 0) {
+            if (player_turn == 0) {
                 printf("Not a match. Player 1 doesn't score.\n");
             } else {
                 printf("Not a match. Player 2 doesn't score.\n");
             }
-            delay_loop(player);
+            delay_loop(player_turn);
 
             close_card_pointerVersion(index1, currentColor);
             close_card_pointerVersion(index2, currentColor);
         }
 
         // 4) Update scores
-        if (player == 0) {
+        if (player_turn == 0) {
             player1_score += score;
-            display_score(player, player1_score);
-            player = 1;
+            display_score(player_turn, player1_score);
+            player_turn = 1;
         } else {
             player2_score += score;
-            display_score(player, player2_score);
-            player = 0;
+            display_score(player_turn, player2_score);
+            player_turn = 0;
         }
         score = 0;
     }
 
-    // The loop ended => someone matched 5 pairs 
+    // 5) Determine the winner
     if (player1_score > player2_score) {
         return 0;  // Player 1 wins
+    } else if (player2_score > player1_score) {
+        return 1;  // Player 2 wins
+    } else {
+        return -1;  // Tie
     }
-    return 1;      // Player 2 wins
 }
 
 // ------------------------------------------------------------------------
