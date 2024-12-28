@@ -22,12 +22,12 @@ int pixel_buffer_start; // global variable for VGA pixel buffer
 #define ADDR_7SEG1      ((volatile long *) 0xFF200020)
 #define ADDR_7SEG2      ((volatile long *) 0xFF200030)
 
-// Example PS/2 key scancodes (make sure these match your keyboard)
+// PS/2 key scancodes
 #define KEY_UP    0x75
 #define KEY_DOWN  0x72
 #define KEY_LEFT  0x6B
 #define KEY_RIGHT 0x74
-#define KEY_ENTER 0x5A   // numeric keypad Enter often 0x5A; main Enter may differ
+#define KEY_ENTER 0x5A  
 	
 	// Base addresses for the DE1-SoC peripherals
 #define AUDIO_BASE 0xFF203040 // Base address for the audio controller
@@ -110,9 +110,11 @@ int main(void)
     // 5. End
     if (winner == 0) {
         printf("Player 1 won!\n");
-    } else {
+    } else if (winner == 1) {
         printf("Player 2 won!\n");
-    };
+    } else {
+        printf("It's a tie!\n");
+    }
 	play_sound(win_buffer);
 
     // Just loop forever for this demo
