@@ -60,8 +60,8 @@ void draw_card(int x1, int y1);
 void draw_all_cards();
 
 void get_card_xy(int cardIndex, int *x, int *y);
-void highlight_card(int cardIndex, short int *currentColor);
-void unhighlight_card(int cardIndex, short int *currentColor);
+void highlight_card(int cardIndex);
+void unhighlight_card(int cardIndex);
 
 void display_score(int player, int index);
 void delay_loop(int player);
@@ -303,13 +303,13 @@ int select_card_with_pointer(short int *cardsColorArray, int player)
     static int currentPointerIndex = 0;
 
     // Highlight the initial card
-    highlight_card(currentPointerIndex, cardsColorArray);
+    highlight_card(currentPointerIndex);
 
     while (1) {
         int key = read_PS2_arrow_or_enter();
 
         // Unhighlight old pointer
-        unhighlight_card(currentPointerIndex, cardsColorArray);
+        unhighlight_card(currentPointerIndex);
 
         if (player == 0) {
             // Player 1 uses arrow keys only
@@ -353,12 +353,12 @@ int select_card_with_pointer(short int *cardsColorArray, int player)
 
         // Handle key for selection
         if (key == KEY_ENTER) {
-            highlight_card(currentPointerIndex, cardsColorArray);
+            highlight_card(currentPointerIndex);
             return currentPointerIndex;
         }
 
         // Highlight new pointer position
-        highlight_card(currentPointerIndex, cardsColorArray);
+        highlight_card(currentPointerIndex);
     }
 }
 
@@ -400,9 +400,9 @@ void get_card_xy(int cardIndex, int *x, int *y)
 }
 
 // Draws a frame around a card to highlight it
-void highlight_card(int cardIndex, short int *currentColor) {
+void highlight_card(int cardIndex) {
     int x, y;
-    get_card_xy(cardIndex, &x, &y); // Get the top-left corner of the card
+    get_card_xy(cardIndex, &x, &y);
 
     x -= 6;
     y -= 25;
@@ -429,16 +429,16 @@ void highlight_card(int cardIndex, short int *currentColor) {
 }
 
 // Removes the frame from a card
-void unhighlight_card(int cardIndex, short int *currentColor) {
+void unhighlight_card(int cardIndex) {
     int x, y;
-    get_card_xy(cardIndex, &x, &y); // Get the top-left corner of the card
+    get_card_xy(cardIndex, &x, &y);
 
     x -= 6;
     y -= 25;
 
     // Draw the frame around the card
     int frame_thickness = 2; // Thickness of the frame
-    short int frame_color = 0x0000; // Green color for the frame
+    short int frame_color = 0x0000; // Black color to "un"frame
 
     // Top and bottom edges
     for (int i = 0; i < 38; i++) {
@@ -551,7 +551,7 @@ void display_score(int player, int index)
     }
 }
 
-// Simple delay + next-player prompt
+// Simple delay
 void delay_loop(int player)
 {
     int i = 1000000;
