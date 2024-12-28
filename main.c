@@ -27,7 +27,11 @@ int pixel_buffer_start; // global variable for VGA pixel buffer
 #define KEY_DOWN  0x72
 #define KEY_LEFT  0x6B
 #define KEY_RIGHT 0x74
-#define KEY_ENTER 0x5A  
+#define KEY_ENTER 0x5A 
+#define KEY_W     0x1D
+#define KEY_A     0x1C
+#define KEY_S     0x1B
+#define KEY_D     0x23
 	
 	// Base addresses for the DE1-SoC peripherals
 #define AUDIO_BASE 0xFF203040 // Base address for the audio controller
@@ -45,7 +49,7 @@ volatile int *audio_ptr = (int *) AUDIO_BASE;    // Audio port base address
 int  read_PS2_arrow_or_enter();
 int  game_start_single(short int *array);
 int  game_start_dual(short int *array);
-int  select_card_with_pointer(short int *cardsColorArray);
+int  select_card_with_pointer(short int *cardsColorArray, int player);
 void flip_card_pointerVersion(int index, short int *patternArray, short int *currentColor);
 void close_card_pointerVersion(int index, short int *currentColor);
 
@@ -169,7 +173,7 @@ int game_start_dual(short int *array)
         // 1) Select the first card
         bool valid = false;
         while(!valid) {
-            index1 = select_card_with_pointer(currentColor);
+            index1 = select_card_with_pointer(currentColor, player_turn);
             if (!matched[index1]) {
                 valid = true;
             } else {
@@ -182,7 +186,7 @@ int game_start_dual(short int *array)
         // 2) Select the second card
         valid = false;
         while(!valid) {
-            index2 = select_card_with_pointer(currentColor);
+            index2 = select_card_with_pointer(currentColor, player_turn);
             if (!matched[index2] && index1 != index2) {
                 valid = true;
             } else {
@@ -256,80 +260,104 @@ int read_PS2_arrow_or_enter()
     while(1) {
         PS2_data = *(PS2_ptr);
         RVALID   = PS2_data & 0x8000;
-		if (RVALID){printf("RVALID: %d\n", RVALID);};
         if (RVALID) {
             byte = PS2_data & 0xFF;
 			
             // Some keyboards send 0xE0 or 0xF0 before arrow keys
             if (byte == 0xE0) {
                 continue; 
-            }
-			else if (byte == 0xF0){
+            } else if (byte == 0xF0){
 				f_count += 1;
 				continue;
 			}
-            // Check if arrow or Enter
-            if (byte == KEY_UP   || byte == KEY_DOWN  || 
+
+            // Player 1: Arrow keys and Enter
+            if (byte == KEY_UP || byte == KEY_DOWN ||
                 byte == KEY_LEFT || byte == KEY_RIGHT ||
                 byte == KEY_ENTER) {
-				if (f_count == 1){
-					f_count = 0;
-                	return byte;}
+                if (f_count == 1) {
+                    f_count = 0;
+                    return byte; // Return the arrow key or Enter
+                }
             }
+
+            // Player 2: W/A/S/D keys
+            if (byte == KEY_W || byte == KEY_A || byte == KEY_S || byte == KEY_D) {
+                if (f_count == 1) {
+                    f_count = 0;
+                    return byte; // Return W, A, S, or D key
+                }
+            }
+
         }
     }
 }
 
 // Let user move pointer among 10 cards (2 rows x 5 cols)
-int select_card_with_pointer(short int *cardsColorArray)
+int select_card_with_pointer(short int *cardsColorArray, int player)
 {
-    static int currentPointerIndex = 0; 
-    // You can reset to 0 if you want each selection to start at top-left:
-    //   int currentPointerIndex = 0;
+    static int currentPointerIndex = 0;
 
-    // highlight initial
+    // Highlight the initial card
     highlight_card(currentPointerIndex, cardsColorArray);
 
-    while(1) {
+    while (1) {
         int key = read_PS2_arrow_or_enter();
 
-        // unhighlight old pointer
+        // Unhighlight old pointer
         unhighlight_card(currentPointerIndex, cardsColorArray);
 
-        if (key == KEY_LEFT) {
-            // move pointer left if not at leftmost col
-            if (currentPointerIndex % 5 > 0) {
-                currentPointerIndex--;
+        if (player == 0) {
+            // Player 1 uses arrow keys only
+            if (key == KEY_LEFT) {
+                if (currentPointerIndex % 5 > 0) {
+                    currentPointerIndex--;
+                }
+            } else if (key == KEY_RIGHT) {
+                if (currentPointerIndex % 5 < 4) {
+                    currentPointerIndex++;
+                }
+            } else if (key == KEY_UP) {
+                if (currentPointerIndex >= 5) {
+                    currentPointerIndex -= 5;
+                }
+            } else if (key == KEY_DOWN) {
+                if (currentPointerIndex < 5) {
+                    currentPointerIndex += 5;
+                }
+            }
+        } else if (player == 1) {
+            // Player 2 uses W, A, S, D keys only
+            if (key == KEY_A) {
+                if (currentPointerIndex % 5 > 0) {
+                    currentPointerIndex--;
+                }
+            } else if (key == KEY_D) {
+                if (currentPointerIndex % 5 < 4) {
+                    currentPointerIndex++;
+                }
+            } else if (key == KEY_W) {
+                if (currentPointerIndex >= 5) {
+                    currentPointerIndex -= 5;
+                }
+            } else if (key == KEY_S) {
+                if (currentPointerIndex < 5) {
+                    currentPointerIndex += 5;
+                }
             }
         }
-        else if (key == KEY_RIGHT) {
-            // move pointer right if not at rightmost col
-            if (currentPointerIndex % 5 < 4) {
-                currentPointerIndex++;
-            }
-        }
-        else if (key == KEY_UP) {
-            // move pointer up if in bottom row
-            if (currentPointerIndex >= 5) {
-                currentPointerIndex -= 5;
-            }
-        }
-        else if (key == KEY_DOWN) {
-            // move pointer down if in top row
-            if (currentPointerIndex < 5) {
-                currentPointerIndex += 5;
-            }
-        }
-        else if (key == KEY_ENTER) {
-            // re-highlight so we can see the final position
+
+        // Handle key for selection
+        if (key == KEY_ENTER) {
             highlight_card(currentPointerIndex, cardsColorArray);
             return currentPointerIndex;
         }
 
-        // highlight new pointer
+        // Highlight new pointer position
         highlight_card(currentPointerIndex, cardsColorArray);
     }
 }
+
 
 // Flip card open
 void flip_card_pointerVersion(int index, short int *patternArray, short int *currentColor)
