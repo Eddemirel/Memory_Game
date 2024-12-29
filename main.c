@@ -9,7 +9,7 @@
 #define SINGLE_MODE 0
 #define DUAL_MODE 1
 
-int game_mode = DUAL_MODE; // This should be updated AT THE START PAGE.
+int game_mode = SINGLE_MODE; // This should be updated AT THE START PAGE.
 
 
 // ------------------ DE1-SoC/PS2 Constants & Addresses --------------------
@@ -33,7 +33,7 @@ int pixel_buffer_start; // global variable for VGA pixel buffer
 #define KEY_S     0x1B
 #define KEY_D     0x23
 	
-	// Base addresses for the DE1-SoC peripherals
+// Base addresses for the DE1-SoC peripherals
 #define AUDIO_BASE 0xFF203040 // Base address for the audio controller
 #define AUDIO_BUF_SIZE2 62464 // array size for win_Sound_buffer
 #define WRITE_FIFO_THRESHOLD 96		
@@ -129,7 +129,80 @@ int main(void)
 int game_start_single(short int *array)
 {
     printf("Starting Single-Player Mode...\n");
-    // TO BE IMPLEMENTED!
+
+    // Clear screen & draw 2 rows of "cards" (closed = white rectangles)
+    clear_screen();
+    draw_all_cards();
+
+    // Initialize TIMER & 7seg. NOT IMPLEMENTED FOR NOW.
+
+    int player_turn = 0;
+    int player1_score = 0;
+    int index1 = -1, index2 = -1;
+    int score = 0;
+
+    // Keep track of which cards are matched
+    bool matched[10] = {false, false, false, false, false, 
+                        false, false, false, false, false};
+
+    // Keep track of the "current color" on each card (white if closed)
+    short int currentColor[10];
+    for (int i = 0; i < 10; i++) {
+        currentColor[i] = 0xFFFF; // all start closed (white)
+    }
+
+    // We have 5 pairs => the game ends when 5 matches are found
+    while ( (player1_score) < 5 ) 
+    {
+
+        // 1) Select the first card
+        bool valid = false;
+        while(!valid) {
+            index1 = select_card_with_pointer(currentColor, player_turn);
+            if (!matched[index1]) {
+                valid = true;
+            } else {
+                printf("Card %d is already matched. Choose another.\n", index1);
+            }
+        }
+        // flip open the first card
+        flip_card_pointerVersion(index1, array, currentColor);
+
+        // 2) Select the second card
+        valid = false;
+        while(!valid) {
+            index2 = select_card_with_pointer(currentColor, player_turn);
+            if (!matched[index2] && index1 != index2) {
+                valid = true;
+            } else {
+                printf("Invalid or already matched. Choose again.\n");
+            }
+        }
+        // flip open the second card
+        flip_card_pointerVersion(index2, array, currentColor);
+
+        // 3) Check match
+        if (array[index1] == array[index2]) {
+            // match
+            matched[index1] = true;
+            matched[index2] = true;
+			play_sound(win_buffer);
+            score = 1;
+            player1_score += score;
+            printf("Point!\n");
+
+        } else {
+            // mismatch => delay, then flip them back
+            player1_score += score;
+            printf("Not a match. Try again!\n");
+            delay_loop(player_turn);
+
+            close_card_pointerVersion(index1, currentColor);
+            close_card_pointerVersion(index2, currentColor);
+        }
+
+        score = 0;
+    }
     return 0;
 }
 
