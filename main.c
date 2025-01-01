@@ -11,7 +11,6 @@
 
 int game_mode = SINGLE_MODE; // This should be updated AT THE START PAGE.
 
-
 // ------------------ DE1-SoC/PS2 Constants & Addresses --------------------
 #define PS2_BASE        ((volatile long *) 0xFF200100)
 volatile int * PS2_ptr = (int *)PS2_BASE;
@@ -104,7 +103,7 @@ int main(void)
     shuffle_deck(testPatterns, 10);
 
     // 4. Run the game loop and start the game.
-    int winner;
+    int winner = -1;
     if (game_mode == SINGLE_MODE) {
         winner = game_start_single(testPatterns);  // Single-player mode
     } else if (game_mode == DUAL_MODE) {
