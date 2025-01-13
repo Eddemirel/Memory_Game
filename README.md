@@ -31,7 +31,8 @@ This screen should not display cards yet. we need to see cards with their closed
 
 
 Game (single) player
-As soon as we hit the space to start the game, we need to start a timer to count seconds and display time on the seven segment display until the time finishes.
+As soon as we hit the space to start the game.
+Seven segment displays the number of turns the player has played up to that point.
 Player must continue his/her turns as long as all the cards are paired.
 When the game is completed, stay with all the cards open and the timer is stopped, play the game's ringtone.
 Press esc to quit (quit must take us to set up screen)
